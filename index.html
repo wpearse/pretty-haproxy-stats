@@ -19,7 +19,15 @@
                 width: 100%;
                 padding: 24px 48px;
             }
+            #loading-indicator {
+                position: absolute;
+                top: 10px;
+                right: 10px;
+            }
         </style>
+
+
+        <p id="loading-indicator" class="text-muted" data-bind="visible: is_loading()">Loading...</p>
 
         <div class="container">
 
@@ -93,19 +101,21 @@
 
     var view_model = {
         front: ko.observableArray([]),
-        back: ko.observableArray([])
+        back: ko.observableArray([]),
+        reload_counter: ko.observable(0),
+        is_loading: ko.observable(true)
     }
     ko.applyBindings(view_model);
 
     function format_number(number) {
         if (number < 1000) {
             return number;
-        } else if (number < 10 * 1000) {
-            return (Math.round(number / 100) / 10) + 'K';
+        } else if (number < 100 * 1000) {
+            return parseFloat(Math.round(number / 10) / 100).toFixed(2) + 'K';
         } else if (number < 1000 * 1000) {
-            return Math.round(number / 1000) + 'K';
+            return parseFloat(Math.round(number / 1000)).toFixed(2) + 'K';
         } else if (number < 1000 * 1000 * 1000) {
-            return (Math.round(number / 100 * 1000) / 10) + 'M';
+            return (Math.round(number / 100 * 1000) / 10).toFixed(2) + 'M';
         }
     }
 
@@ -156,16 +166,32 @@
     }
 
     function reload_data() {
+        view_model.is_loading(true);
         Papa.parse(settings.haproxy_stats_url, {
         	download: true,
             header: true,
         	complete: function(results) {
                 got_data(results);
+                view_model.is_loading(false);
         	}
         });
     }
 
-    window.setInterval('reload_data', 1000 * settings.refresh_interval_seconds);
+    function increment_reload_counter() {
+        view_model.reload_counter(view_model.reload_counter() + 1);
+        if (view_model.reload_counter() == settings.refresh_interval_seconds) {
+            view_model.reload_counter(0);
+            reload_data();
+        }
+    }
+
+    window.setInterval(function() {
+        view_model.reload_counter(view_model.reload_counter() + 1);
+        if (view_model.reload_counter() == settings.refresh_interval_seconds) {
+            view_model.reload_counter(0);
+            reload_data();
+        }
+    }, 1000);
     reload_data();
 
     </script>
