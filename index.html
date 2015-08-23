@@ -1,0 +1,172 @@
+<!doctype html>
+<html>
+    <head>
+        <link rel="stylesheet" href="css/bootstrap.min.css">
+        <link rel="stylesheet" href="css/cyborg.min.css">
+        <script type="text/javascript" src="js/papa-parse.min.js"></script>
+        <script type="text/javascript" src="js/knockout-js.min.js"></script>
+    </head>
+    <body>
+
+        <style>
+            .panel-title {
+                text-transform: uppercase;
+            }
+            .panel-body h3 {
+                margin-top: 10px;
+            }
+            .container {
+                width: 100%;
+                padding: 24px 48px;
+            }
+        </style>
+
+        <div class="container">
+
+            <!--
+                Backend
+            -->
+            <div data-bind="foreach: Object.keys(back())">
+                <h1 data-bind="text: $data"></h1>
+                <div class="row" data-bind="foreach: $root.back()[$data]">
+
+                    <!--<pre data-bind="text: ko.toJSON($data, null, 2)"></pre>-->
+
+                    <div class="row" data-bind="foreach: ['1xx', '2xx', '3xx', '4xx', '5xx', 'other']">
+                        <div class="col-sm-2">
+                            <div class="panel panel-default" data-bind="css: { 'panel-success' : ($data == '2xx'), 'panel-danger' : ($data == '4xx' || $data == '5xx')}">
+                                <div class="panel-heading">
+                                    <h3 class="panel-title" data-bind="text: $data"></h3>
+                                </div>
+                                <div class="panel-body">
+                                    <h3 data-bind="text: format_number($parent['hrsp_' + $data])" class="text-center"></h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!--
+                Frontend
+            -->
+            <div data-bind="foreach: front()">
+                <h1 data-bind="text: $data['# pxname']"></h1>
+                <div class="row" data-bind="foreach: ['1xx', '2xx', '3xx', '4xx', '5xx', 'other']">
+
+                    <div class="col-sm-2">
+                        <div class="panel panel-default" data-bind="css: { 'panel-success' : ($data == '2xx'), 'panel-danger' : ($data == '4xx' || $data == '5xx')}">
+                            <div class="panel-heading">
+                                <h3 class="panel-title" data-bind="text: $data"></h3>
+                            </div>
+                            <div class="panel-body">
+                                <h3 data-bind="text: format_number($parent['hrsp_' + $data])" class="text-center"></h3>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+
+    </body>
+    <script>
+
+    var settings = {
+
+        // the speed at which you want the stats to refresh, in seconds
+        refresh_interval_seconds: 5,
+
+        // true if you want to show summary for all http/https traffic
+        show_frontend_summary: false,
+
+        // true if you want to only show summarized info for each backend
+        show_backend_summary_only: true,
+
+        // the url to your haproxy stats (CSV format). usually something like:
+        // http://server.domain/haproxy?stats;csv;norefresh
+        haproxy_stats_url: "http://localhost:8080/haproxy.csv"
+
+    };
+
+    var view_model = {
+        front: ko.observableArray([]),
+        back: ko.observableArray([])
+    }
+    ko.applyBindings(view_model);
+
+    function format_number(number) {
+        if (number < 1000) {
+            return number;
+        } else if (number < 10 * 1000) {
+            return (Math.round(number / 100) / 10) + 'K';
+        } else if (number < 1000 * 1000) {
+            return Math.round(number / 1000) + 'K';
+        } else if (number < 1000 * 1000 * 1000) {
+            return (Math.round(number / 100 * 1000) / 10) + 'M';
+        }
+    }
+
+    function got_data(results) {
+
+        var frontend = [];
+        var backend = [];
+
+        // sort CSV lines into arrays of frontend/backend services
+        for (i = 0; i < results.data.length; i++) {
+            var r = results.data[i];
+            var l = r['# pxname'];
+            var s = r['svname'];
+            if (settings.show_frontend_summary && s == 'FRONTEND') {
+                frontend.push(r);
+            } else {
+                backend.push(r);
+            }
+        }
+
+        // merge the backend services on the pxname column
+        var merged_backends = {};
+        for (i = 0; i < backend.length; i++) {
+            var b = backend[i];
+            var l = b['# pxname'];
+
+            if (merged_backends[l] == undefined) {
+                var hosts = [];
+                var session_total = 0;
+                for (j = 0; j < backend.length; j++) {
+                    var bb = backend[j];
+                    var ll = bb['# pxname'];
+                    if (l == ll && bb['svname'] == 'BACKEND') {
+                        session_total += bb['stot'];
+                        hosts.push(bb);
+                    }
+                }
+                if (session_total > 0) {
+                    merged_backends[l] = hosts;
+                }
+            }
+        }
+
+        backend = merged_backends;
+
+        view_model.front(frontend);
+        view_model.back(merged_backends);
+    }
+
+    function reload_data() {
+        Papa.parse(settings.haproxy_stats_url, {
+        	download: true,
+            header: true,
+        	complete: function(results) {
+                got_data(results);
+        	}
+        });
+    }
+
+    window.setInterval('reload_data', 1000 * settings.refresh_interval_seconds);
+    reload_data();
+
+    </script>
+</html>
