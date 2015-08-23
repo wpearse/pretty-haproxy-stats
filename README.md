@@ -19,16 +19,24 @@ I couldn't have built this without the following libraries.
 
 ### Knockout
 
-`(c) Steven Sanderson - http://knockoutjs.com/`
+`(c) Steven Sanderson`
+
+[http://knockoutjs.com/](http://knockoutjs.com/)
 
 ### PapaParse
 
-`(c) 2013-2015 Matt Holt - https://github.com/mholt/PapaParse`
+`(c) 2013-2015 Matt Holt`
+
+[https://github.com/mholt/PapaParse](https://github.com/mholt/PapaParse)
 
 ### Bootstrap
 
-`(c) 2011-2015 Twitter, Inc. - http://getbootstrap.com`
+`(c) 2011-2015 Twitter, Inc.`
+
+[http://getbootstrap.com](http://getbootstrap.com)
 
 ### Cyborg Boostrap theme
 
-`(c) 2012-2015 Thomas Park - https://bootswatch.com/cyborg/`
+`(c) 2012-2015 Thomas Park`
+
+[https://bootswatch.com/cyborg/](https://bootswatch.com/cyborg/)
