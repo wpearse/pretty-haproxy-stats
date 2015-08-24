@@ -36,7 +36,7 @@
             -->
             <div data-bind="foreach: Object.keys(back())">
                 <h1 data-bind="text: $data"></h1>
-                <div class="row" data-bind="foreach: $root.back()[$data]">
+                <div data-bind="foreach: $root.back()[$data]">
 
                     <!--<pre data-bind="text: ko.toJSON($data, null, 2)"></pre>-->
 
@@ -53,7 +53,34 @@
                         </div>
                     </div>
 
+                    <div class="row" data-bind="foreach: ['scur', 'smax', 'stot']">
+                        <div class="col-sm-4">
+                            <div class="panel panel-default">
+                                <div class="panel-heading">
+                                    <h3 class="panel-title" data-bind="text: $data.replace('s', '').replace('cur', 'current').replace('tot', 'total').replace('max', 'maximum') + ' sessions'"></h3>
+                                </div>
+                                <div class="panel-body">
+                                    <h3 data-bind="text: format_number($parent[$data])" class="text-center"></h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row" data-bind="foreach: ['bin', 'bout']">
+                        <div class="col-sm-6">
+                            <div class="panel panel-default">
+                                <div class="panel-heading">
+                                    <h3 class="panel-title" data-bind="text: $data.replace('b', 'data ')"></h3>
+                                </div>
+                                <div class="panel-body">
+                                    <h3 data-bind="text: format_number_data($parent[$data])" class="text-center"></h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
+
             </div>
 
             <!--
@@ -61,6 +88,7 @@
             -->
             <div data-bind="foreach: front()">
                 <h1 data-bind="text: $data['# pxname']"></h1>
+
                 <div class="row" data-bind="foreach: ['1xx', '2xx', '3xx', '4xx', '5xx', 'other']">
 
                     <div class="col-sm-2">
@@ -75,6 +103,33 @@
                     </div>
 
                 </div>
+
+                <div class="row" data-bind="foreach: ['scur', 'smax', 'stot']">
+                    <div class="col-sm-4">
+                        <div class="panel panel-default">
+                            <div class="panel-heading">
+                                <h3 class="panel-title" data-bind="text: $data.replace('s', '').replace('cur', 'current').replace('tot', 'total').replace('max', 'maximum') + ' sessions'"></h3>
+                            </div>
+                            <div class="panel-body">
+                                <h3 data-bind="text: format_number($parent[$data])" class="text-center"></h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row" data-bind="foreach: ['bin', 'bout']">
+                    <div class="col-sm-6">
+                        <div class="panel panel-default">
+                            <div class="panel-heading">
+                                <h3 class="panel-title" data-bind="text: $data.replace('b', 'data ')"></h3>
+                            </div>
+                            <div class="panel-body">
+                                <h3 data-bind="text: format_number_data($parent[$data])" class="text-center"></h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
 
         </div>
@@ -106,6 +161,25 @@
         is_loading: ko.observable(true)
     }
     ko.applyBindings(view_model);
+
+    function format_number_data(bytes) {
+        var kb = parseFloat(bytes / 1024).toFixed(2);
+        if (kb < 1024) {
+            return kb + ' KB';
+        } else {
+            var mb = parseFloat(kb / 1024).toFixed(2);
+            if (mb < 1024) {
+                return mb + ' MB';
+            } else {
+                var gb = parseFloat(mb / 1024).toFixed(2);
+                if (gb < 1024) {
+                    return gb + ' GB';
+                }
+            }
+        }
+        return bytes + 'B';
+    }
+
 
     function format_number(number) {
         if (number < 1000) {
